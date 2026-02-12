@@ -149,6 +149,8 @@ def paint_point_track(
       y = min(max(y, 0.0), height)
 
       if visibles[i, t]:
+                if not np.isfinite(x) or not np.isfinite(y):
+                    continue
         x1, y1 = np.floor(x).astype(np.int32), np.floor(y).astype(np.int32)
         x2, y2 = x1 + 1, y1 + 1
 
@@ -159,11 +161,27 @@ def paint_point_track(
             + icon3 * (x - x1) * (y2 - y)
             + icon4 * (x - x1) * (y - y1)
         )
-        x_ub = x1 + 2 * radius + 2
-        y_ub = y1 + 2 * radius + 2
-        image[y1:y_ub, x1:x_ub, :] = (1 - patch) * image[
-            y1:y_ub, x1:x_ub, :
-        ] + patch * np.array(colormap[i])[np.newaxis, np.newaxis, :]
+                x_ub = x1 + 2 * radius + 2
+                y_ub = y1 + 2 * radius + 2
+
+                # Clip patch to image bounds to avoid empty slices at borders.
+                y1_clip = max(y1, 0)
+                x1_clip = max(x1, 0)
+                y_ub_clip = min(y_ub, image.shape[0])
+                x_ub_clip = min(x_ub, image.shape[1])
+                if y_ub_clip <= y1_clip or x_ub_clip <= x1_clip:
+                    continue
+
+                patch_y0 = y1_clip - y1
+                patch_x0 = x1_clip - x1
+                patch_y1 = patch_y0 + (y_ub_clip - y1_clip)
+                patch_x1 = patch_x0 + (x_ub_clip - x1_clip)
+                patch_crop = patch[patch_y0:patch_y1, patch_x0:patch_x1, :]
+
+                image[y1_clip:y_ub_clip, x1_clip:x_ub_clip, :] = (
+                        (1 - patch_crop) * image[y1_clip:y_ub_clip, x1_clip:x_ub_clip, :]
+                        + patch_crop * np.array(colormap[i])[np.newaxis, np.newaxis, :]
+                )
 
       # Remove the pad
       video[t] = image[
@@ -611,4 +629,4 @@ with gr.Blocks() as demo:
     )
 
     
-demo.launch(show_api=False, show_error=True, debug=True, share=True)
+demo.launch(show_error=True, debug=True, share=True)
