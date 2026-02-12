@@ -149,8 +149,6 @@ def paint_point_track(
       y = min(max(y, 0.0), height)
 
       if visibles[i, t]:
-                if not np.isfinite(x) or not np.isfinite(y):
-                    continue
         x1, y1 = np.floor(x).astype(np.int32), np.floor(y).astype(np.int32)
         x2, y2 = x1 + 1, y1 + 1
 
@@ -161,27 +159,28 @@ def paint_point_track(
             + icon3 * (x - x1) * (y2 - y)
             + icon4 * (x - x1) * (y - y1)
         )
-                x_ub = x1 + 2 * radius + 2
-                y_ub = y1 + 2 * radius + 2
 
-                # Clip patch to image bounds to avoid empty slices at borders.
-                y1_clip = max(y1, 0)
-                x1_clip = max(x1, 0)
-                y_ub_clip = min(y_ub, image.shape[0])
-                x_ub_clip = min(x_ub, image.shape[1])
-                if y_ub_clip <= y1_clip or x_ub_clip <= x1_clip:
-                    continue
+        x_ub = x1 + 2 * radius + 2
+        y_ub = y1 + 2 * radius + 2
 
-                patch_y0 = y1_clip - y1
-                patch_x0 = x1_clip - x1
-                patch_y1 = patch_y0 + (y_ub_clip - y1_clip)
-                patch_x1 = patch_x0 + (x_ub_clip - x1_clip)
-                patch_crop = patch[patch_y0:patch_y1, patch_x0:patch_x1, :]
+        # Clamp indices to image boundaries
+        x1_clamped = max(x1, 0)
+        y1_clamped = max(y1, 0)
+        x_ub_clamped = min(x_ub, image.shape[1])
+        y_ub_clamped = min(y_ub, image.shape[0])
 
-                image[y1_clip:y_ub_clip, x1_clip:x_ub_clip, :] = (
-                        (1 - patch_crop) * image[y1_clip:y_ub_clip, x1_clip:x_ub_clip, :]
-                        + patch_crop * np.array(colormap[i])[np.newaxis, np.newaxis, :]
-                )
+        # Calculate cropping for patch
+        patch_x_start = x1_clamped - x1
+        patch_y_start = y1_clamped - y1
+        patch_x_end = patch_x_start + (x_ub_clamped - x1_clamped)
+        patch_y_end = patch_y_start + (y_ub_clamped - y1_clamped)
+
+        if (x_ub_clamped > x1_clamped) and (y_ub_clamped > y1_clamped):
+          patch_cropped = patch[patch_y_start:patch_y_end, patch_x_start:patch_x_end, :]
+          image[y1_clamped:y_ub_clamped, x1_clamped:x_ub_clamped, :] = (
+              (1 - patch_cropped) * image[y1_clamped:y_ub_clamped, x1_clamped:x_ub_clamped, :]
+              + patch_cropped * np.array(colormap[i])[np.newaxis, np.newaxis, :]
+          )
 
       # Remove the pad
       video[t] = image[
