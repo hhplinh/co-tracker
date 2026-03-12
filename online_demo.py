@@ -93,6 +93,8 @@ if __name__ == "__main__":
 
     print("Tracks are computed")
 
+    torch.save({"tracks": pred_tracks, "visibility": pred_visibility}, "pred_results.pt")
+
     # save a video with predicted tracks
     seq_name = args.video_path.split("/")[-1]
     video = torch.tensor(np.stack(window_frames), device=DEFAULT_DEVICE).permute(
@@ -102,3 +104,6 @@ if __name__ == "__main__":
     vis.visualize(
         video, pred_tracks, pred_visibility, query_frame=args.grid_query_frame
     )
+
+
+# python cotracker3/online_demo.py --video_path inference/fish.mp4 --checkpoint checkpoints/scaled_online.pth --grid_size 100 --grid_query_frame 0
