@@ -38,6 +38,30 @@ if __name__ == "__main__":
         help="Compute dense and grid tracks starting from this frame",
     )
 
+    parser.add_argument(
+        "--output_dir",
+        default="./saved_videos",
+        help="Directory to save the output video with predicted tracks",
+    )
+
+    parser.add_argument(
+        "--output_video_name",
+        default="output_with_tracks.mp4",
+        help="Name of the output video file with predicted tracks",
+    )
+
+    parser.add_argument(
+        "--output_track_folder",
+        default="./saved_tracks",
+        help="Directory to save the predicted tracks",
+    )
+
+    parser.add_argument(
+        "--track_name",
+        default="pred_tracks.pt",
+        help="Name of the file to save predicted tracks",
+    )
+
     args = parser.parse_args()
 
     if not os.path.isfile(args.video_path):
@@ -48,6 +72,12 @@ if __name__ == "__main__":
     else:
         model = torch.hub.load("facebookresearch/co-tracker", "cotracker3_online")
     model = model.to(DEFAULT_DEVICE)
+
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
+    if not os.path.exists(args.output_track_folder):
+        os.makedirs(args.output_track_folder)
+
 
     window_frames = []
 
@@ -93,17 +123,18 @@ if __name__ == "__main__":
 
     print("Tracks are computed")
 
-    torch.save({"tracks": pred_tracks, "visibility": pred_visibility}, "pred_results.pt")
+    torch.save({"tracks": pred_tracks, "visibility": pred_visibility}, os.path.join(args.output_track_folder, args.track_name))
+    print(f"Predicted tracks are saved to {os.path.join(args.output_track_folder, args.track_name)}")
 
     # save a video with predicted tracks
     seq_name = args.video_path.split("/")[-1]
     video = torch.tensor(np.stack(window_frames), device=DEFAULT_DEVICE).permute(
         0, 3, 1, 2
     )[None]
-    vis = Visualizer(save_dir="./saved_videos", pad_value=120, linewidth=3)
+    vis = Visualizer(save_dir=args.output_dir, pad_value=120, linewidth=3)
     vis.visualize(
         video, pred_tracks, pred_visibility, query_frame=args.grid_query_frame
     )
 
 
-# python cotracker3/online_demo.py --video_path inference/fish.mp4 --checkpoint checkpoints/scaled_online.pth --grid_size 100 --grid_query_frame 0
+# python cotracker3/online_demo.py --video_path inference/fish.mp4 --checkpoint checkpoints/scaled_online.pth --grid_size 50 --grid_query_frame 0 --output_dir saved_videos --output_video_name output_with_tracks.mp4
