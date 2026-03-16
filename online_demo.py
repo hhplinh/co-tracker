@@ -39,27 +39,15 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--output_dir",
-        default="./saved_videos",
-        help="Directory to save the output video with predicted tracks",
+        "--output_video_path",
+        default="./saved_videos/output_with_tracks.mp4",
+        help="Path to save the output video with predicted tracks",
     )
 
     parser.add_argument(
-        "--output_video_name",
-        default="output_with_tracks.mp4",
-        help="Name of the output video file with predicted tracks",
-    )
-
-    parser.add_argument(
-        "--output_track_folder",
-        default="./saved_tracks",
-        help="Directory to save the predicted tracks",
-    )
-
-    parser.add_argument(
-        "--track_name",
-        default="pred_tracks.pt",
-        help="Name of the file to save predicted tracks",
+        "--output_track_path",
+        default="./saved_tracks/pred_tracks.pt",
+        help="Path to save the predicted tracks",
     )
 
     args = parser.parse_args()
@@ -73,10 +61,12 @@ if __name__ == "__main__":
         model = torch.hub.load("facebookresearch/co-tracker", "cotracker3_online")
     model = model.to(DEFAULT_DEVICE)
 
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
-    if not os.path.exists(args.output_track_folder):
-        os.makedirs(args.output_track_folder)
+    output_video_dir = os.path.dirname(args.output_video_path)
+    output_track_dir = os.path.dirname(args.output_track_path)
+    if not os.path.exists(output_video_dir):
+        os.makedirs(output_video_dir)
+    if not os.path.exists(output_track_dir):
+        os.makedirs(output_track_dir)
 
 
     window_frames = []
@@ -123,17 +113,17 @@ if __name__ == "__main__":
 
     print("Tracks are computed")
 
-    torch.save({"tracks": pred_tracks, "visibility": pred_visibility}, os.path.join(args.output_track_folder, args.track_name))
-    print(f"Predicted tracks are saved to {os.path.join(args.output_track_folder, args.track_name)}")
+    torch.save({"tracks": pred_tracks, "visibility": pred_visibility}, args.output_track_path)
+    print(f"Predicted tracks are saved to {args.output_track_path}")
 
     # save a video with predicted tracks
     seq_name = args.video_path.split("/")[-1]
     video = torch.tensor(np.stack(window_frames), device=DEFAULT_DEVICE).permute(
         0, 3, 1, 2
     )[None]
-    vis = Visualizer(save_dir=args.output_dir, pad_value=120, linewidth=3)
+    vis = Visualizer(save_dir=output_video_dir, pad_value=120, linewidth=3)
     vis.visualize(
-        video, pred_tracks, pred_visibility, query_frame=args.grid_query_frame, filename=args.output_video_name
+        video, pred_tracks, pred_visibility, query_frame=args.grid_query_frame, filename=os.path.basename(args.output_video_path)
     )
 
 # python cotracker3/online_demo.py --video_path split_vid_no_ov/fish-2-of-2.mp4 --checkpoint checkpoints/scaled_online.pth --grid_size 50 --grid_query_frame 0 --output_dir split_vid_no_ov_res --output_video_name vid2 --output_track_folder split_vid_no_ov_res --track_name tracks2.pt
