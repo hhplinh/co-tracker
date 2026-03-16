@@ -133,8 +133,7 @@ if __name__ == "__main__":
     )[None]
     vis = Visualizer(save_dir=args.output_dir, pad_value=120, linewidth=3)
     vis.visualize(
-        video, pred_tracks, pred_visibility, query_frame=args.grid_query_frame
+        video, pred_tracks, pred_visibility, query_frame=args.grid_query_frame, filename=args.output_video_name
     )
 
-
-# python cotracker3/online_demo.py --video_path inference/fish.mp4 --checkpoint checkpoints/scaled_online.pth --grid_size 50 --grid_query_frame 0 --output_dir saved_videos --output_video_name output_with_tracks.mp4
+# python cotracker3/online_demo.py --video_path split_vid_no_ov/fish-2-of-2.mp4 --checkpoint checkpoints/scaled_online.pth --grid_size 50 --grid_query_frame 0 --output_dir split_vid_no_ov_res --output_video_name vid2 --output_track_folder split_vid_no_ov_res --track_name tracks2.pt
