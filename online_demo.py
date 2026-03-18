@@ -68,7 +68,6 @@ if __name__ == "__main__":
     if not os.path.exists(output_track_dir):
         os.makedirs(output_track_dir)
 
-
     window_frames = []
 
     def _process_step(window_frames, is_first_step, grid_size, grid_query_frame):
@@ -116,7 +115,6 @@ if __name__ == "__main__":
     torch.save({"tracks": pred_tracks, "visibility": pred_visibility}, args.output_track_path)
     print(f"Predicted tracks are saved to {args.output_track_path}")
 
-    # save a video with predicted tracks
     seq_name = args.video_path.split("/")[-1]
     video = torch.tensor(np.stack(window_frames), device=DEFAULT_DEVICE).permute(
         0, 3, 1, 2
@@ -126,4 +124,4 @@ if __name__ == "__main__":
         video, pred_tracks, pred_visibility, query_frame=args.grid_query_frame, filename=os.path.basename(args.output_video_path)
     )
 
-# python cotracker3/online_demo.py --video_path split_vid_no_ov/fish-2-of-2.mp4 --checkpoint checkpoints/scaled_online.pth --grid_size 50 --grid_query_frame 0 --output_dir split_vid_no_ov_res --output_video_name vid2 --output_track_folder split_vid_no_ov_res --track_name tracks2.pt
+# python cotracker3/online_demo.py --video_path split_vid_no_ov/fish-2-of-2.mp4 --checkpoint checkpoints/scaled_online.pth --grid_size 50 --grid_query_frame 0 --output_video_path split_vid_no_ov_res/fish-2-of-2.mp4 --output_track_path split_vid_no_ov_res/fish-2-of-2_tracks.pt

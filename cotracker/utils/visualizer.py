@@ -146,8 +146,11 @@ class Visualizer:
             wide_list = list(video.unbind(1))
             wide_list = [wide[0].permute(1, 2, 0).cpu().numpy() for wide in wide_list]
 
-            # Prepare the video file path
-            save_path = os.path.join(self.save_dir, f"{filename}.mp4")
+            if isinstance(filename, str) and filename.endswith(".mp4"):
+                save_path = os.path.join(self.save_dir, f"{filename}")
+            else:
+                # Prepare the video file path
+                save_path = os.path.join(self.save_dir, f"{filename}.mp4")
 
             # Create a writer object
             video_writer = imageio.get_writer(save_path, fps=self.fps)
